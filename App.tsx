@@ -7,6 +7,10 @@
 
 import React from 'react';
 import type {PropsWithChildren} from 'react';
+import Geolocation from '@react-native-community/geolocation';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+
 import {
   SafeAreaView,
   ScrollView,
@@ -15,6 +19,7 @@ import {
   Text,
   useColorScheme,
   View,
+  Button,
 } from 'react-native';
 
 import {
@@ -25,10 +30,12 @@ import {
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
 
+//Geolocation.setRNConfiguration(config);
+//Geolocation.getCurrentPosition(info => console.log(info));
 type SectionProps = PropsWithChildren<{
   title: string;
 }>;
-
+var cb=0;
 function Section({children, title}: SectionProps): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
   return (
@@ -54,6 +61,30 @@ function Section({children, title}: SectionProps): React.JSX.Element {
     </View>
   );
 }
+async function getCurrentLocation(){
+  
+  cb+=1;
+  Geolocation.getCurrentPosition(
+    async position => { 
+      const { latitude, longitude } = position.coords;  
+      const coords = [
+        {id: cb,
+        lat: latitude,
+        log: longitude,},
+      ]
+      await AsyncStorage.setItem('coords', JSON.stringify(coords));
+    },
+  );
+  try {
+    const coords = await AsyncStorage.getItem('coords');
+    if (coords !== null) {
+      // do something with the data
+      console.log("saved: "+coords);
+    }
+  } catch (error) {
+    //console.log(error.message);
+  }
+}
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
@@ -76,20 +107,20 @@ function App(): React.JSX.Element {
           style={{
             backgroundColor: isDarkMode ? Colors.black : Colors.white,
           }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
+          <Section title="">
+            <View style={styles.buttonContainer}>
+              <Button 
+                title="Location Now"
+                onPress={getCurrentLocation}
+              />
+            </View>
           </Section>
-          <Section title="See Your Changes">
+          {/* <Section title="See Your Changes">
             <ReloadInstructions />
           </Section>
           <Section title="Debug">
             <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
+          </Section> */}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -112,6 +143,26 @@ const styles = StyleSheet.create({
   },
   highlight: {
     fontWeight: '700',
+  },
+  buttonContainer: {
+    width: 320,
+    height: 68,
+    marginHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 3,
+    backgroundColor: '#97e9ff'
+  },
+  button: {
+    borderRadius: 10,
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+  },
+  buttonIcon: {
+    paddingRight: 8,
   },
 });
 
